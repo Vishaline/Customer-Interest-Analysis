@@ -1,0 +1,455 @@
+#include <stdio.h>
+#include<string.h>
+#include<stdlib.h>
+// Mentioning and declaring all structures needed
+typedef struct{
+    char first_name[10];
+    char middle_name[10];
+    char last_name[10];
+}customer_name;
+
+struct customer_details{
+    customer_name name;
+    int  age;
+    char gender[1];
+    int contactnum;
+}customer[100];
+
+struct customer_login_info{
+    int contactnum;
+    int loginCount;
+}login_info[100];
+
+struct product_det{
+    int pcode;
+    char pname[20];
+    char pdate[7];
+}det[20];
+
+struct product_details{
+    int ProductCode;
+    char ProductName[5][30];
+    char ageRange[5][30];
+    float productCost;
+}productInfo[100];
+
+// Declaring all necessary variables and functions
+int getCustomerCount(struct customer_details *cusptr, int n);
+void registerCustomer(struct customer_details *cusptr, int cusCount,struct customer_login_info *cusLoginptr);
+int checkCustomerPhone(int n, int customerPhone, struct customer_details *cusptr, struct customer_login_info *cusLoginptr);
+void display(struct customer_details *cusptr, int n);
+void getMostVisitedCustomer(int n, struct customer_login_info *cusLoginptr,struct customer_details *cusptr);
+void showAvailableProducts(struct product_details *prodptr);
+
+void addpurchasedetails();
+void freqpurchasedprod();
+void ageandgender();
+void agerange();
+
+//Main program starts from here 
+int main()
+{
+    int n, customerCount,ch1,ch2,ch3,customerPhone,phoneFlag;
+
+    printf("Enter the number of customers (<= 100) :");
+    scanf("%d",&n);
+    
+    //For displaying currently available products....
+    showAvailableProducts(productInfo);
+
+    do
+    {
+       printf("Please choose among the following:\n 1)Registration\n 2)Log In (if already registered)\n");
+       scanf("%d",&ch1);
+
+       //For Registration...
+       if (ch1 == 1)
+       {
+            customerCount = getCustomerCount(customer,n);
+
+            if(customerCount < n)
+            {
+                registerCustomer(customer,customerCount,login_info);
+
+                printf("If you want to continue , press 5");
+                scanf("%d",&ch2);
+            }
+            else
+            {
+                printf("Registration not allowed as number of customers exceeded the specified limit");
+                printf("If you want to continue , press 5");
+                scanf("%d",&ch2);
+            }
+
+        }
+        else if(ch1 == 2)
+        {
+            display(customer,n);
+            fflush(stdin);
+            printf("Please enter your phone number :");
+            scanf("%d",&customerPhone);
+            fflush(stdin);
+
+            phoneFlag = checkCustomerPhone(n,customerPhone,customer,login_info);
+
+            if (phoneFlag == 1)
+            {
+                printf("User exists\n");
+
+                printf("Please choose any one option among the following....\n");
+                printf("1) Adding the purchase details\n2) Most frequently purchased\n3) Most visited customer\n4)Age range and gender based on the frequency count\n5) Age range of customers those are purchased\n");
+                scanf("%d",&ch3);
+                fflush(stdin);
+                if (ch3 == 1)
+                {
+                   addpurchasedetails(n,det,customer); 
+                }
+
+                else if(ch3 == 2)
+                {
+                    freqpurchasedprod(n);// ch3 = mostFreqPurchasedProd();
+                }
+
+                else if(ch3 == 3)
+                {
+                    getMostVisitedCustomer(n, login_info, customer);
+                }
+
+                else if(ch3 == 4)
+                {
+                    ageandgender(n);//ch3 = agerangeGenderbased();
+                }
+
+                else if(ch3 == 5)
+                {
+                    agerange();//ch3 = agerange();
+                }
+            }
+            else{
+                printf("Phone number you have entered is not the registered one. Please enter the registered phone number");
+            }
+        }
+        else
+        {
+            printf("Please enter a valid choice 1 or 2");
+        }
+    } while(ch2 == 5);
+
+    return 0;
+}
+
+//Getting customer count.................
+int getCustomerCount(struct customer_details *cusptr, int n){
+
+    int count, i;
+    count = 0;
+
+    for(i=0; i<n; i++){
+
+      if(((strlen(cusptr[i].name.first_name) != 0)||(strlen(cusptr[i].name.middle_name) != 0))&& (strlen(cusptr[i].name.last_name) != 0))
+        {
+          count = count+1;
+        }
+    }
+    return count;
+}
+
+//New customer registration....
+void registerCustomer(struct customer_details *cusptr, int cusCount,struct customer_login_info *cusLoginptr){
+
+    printf("Please enter the first name of the customer :");
+    scanf("%s",cusptr[cusCount].name.first_name);
+
+    printf("Please enter the middle name of the customer :");
+    scanf("%s",cusptr[cusCount].name.middle_name);
+
+    printf("Please enter the last name of the customer :");
+    scanf("%s",cusptr[cusCount].name.last_name);
+
+    printf("Please enter age of the customer :");
+    scanf("%d", &cusptr[cusCount].age);
+
+    printf("Please enter the gender of the customer\n M-Male \n F-Female\n");
+    scanf("%s",cusptr[cusCount].gender);
+
+    printf("Please enter contact number of the customer :");
+    scanf("%d",&cusptr[cusCount].contactnum);
+    cusLoginptr[cusCount].contactnum=cusptr[cusCount].contactnum;
+    fflush(stdin);
+}
+
+//Finding customer exists or not by cheking his phone number in the database...........
+int checkCustomerPhone(int n, int customerPhone, struct customer_details *cusptr, struct customer_login_info *cusLoginptr){
+    int phoneFlag = 0, i, loginCounts = 0;
+   printf("Customer phone 1 = %d\n",customerPhone);
+    for(i=0; i<n; i++){
+        printf("Customer login info = %d\n",cusLoginptr[i].contactnum);
+      if(customerPhone == cusLoginptr[i].contactnum){
+        loginCounts = cusLoginptr[i].loginCount + 1;
+        cusLoginptr[i].loginCount = loginCounts;
+        phoneFlag = 1;
+        break;
+      }
+    }
+
+    return phoneFlag;
+}
+
+void display(struct customer_details *cusptr, int n)
+{
+    int i;
+   for(i=0; i<n; i++)
+   {
+       printf("Name = %s %s %s\n",cusptr[i].name.first_name,cusptr[i].name.middle_name,cusptr[i].name.last_name);
+       printf("Age = %d\n",cusptr[i].age);
+       printf("Gender = %s\n",cusptr[i].gender);
+       printf("Contact number = %d\n",cusptr[i].contactnum);
+   }
+}
+
+void addpurchasedetails(int n, struct product_det *det,struct customer_details *cusptr)
+{
+    int st;
+    
+    for(st=0;st<n;st++){
+       printf("\n Enter the product code of item :");
+       scanf("%d",&det[st].pcode);
+       fflush(stdin);// used to clear the temporary memory of the inputs;
+       printf("\nEnter the name of the product :");
+      scanf("%s",det[st].pname);
+       fflush(stdin);
+        printf("\n Enter the date of the product purchased :");
+       scanf(" %[^\n]",det[st].pdate);
+       fflush(stdin);
+    }
+}
+
+void getMostVisitedCustomer(int n, struct customer_login_info *cusLoginptr,struct customer_details *cusptr)
+{
+    int i,j,max,index;
+    index = 0;
+    max = 0;
+    for (i = 0; i < n ;i++)
+    {
+
+      for (j = i + 1; j < n ; j++)
+      {
+        if(cusLoginptr[i].loginCount > cusLoginptr[j].loginCount)
+        {
+          max = cusLoginptr[i].loginCount;
+          index = i;
+
+        }
+        else
+        {
+          max = cusLoginptr[j].loginCount;
+          index = j;
+         }
+      }
+    }
+
+    printf("Most visited customer name is : %s %s %s\n",cusptr[index].name.first_name,cusptr[index].name.middle_name,cusptr[index].name.last_name);
+    printf("Most visited customer phone number is : %d\n",cusptr[index].contactnum);
+  }
+  void freqpurchasedprod(int m, struct customer_login_info *cusLoginptr,struct customer_details *cusptr)
+  {
+       int i,j,count,high,k,freq[m];;
+        for(i=0;i<m;i++)
+    {
+        freq[i]=-1;
+    }
+    for(i=0;i<m;i++)
+    {
+        count=1;
+        for(j=i+1;j<m;j++)
+        {
+            if(det[i].pcode==det[j].pcode)
+            {
+                count=count+1;
+                freq[j]=0;
+            }
+        }
+        if(freq[i]!=0)
+        {
+            freq[i]=count;
+        }
+    }
+    high=freq[0];
+    for(i=0;i<m;i++)
+    {
+        if(freq[i]>=high)
+        {
+            high=freq[i];
+            k=i;
+        }
+    }
+
+    printf("The most frequently bought product is : %d\n",det[k].pcode);
+
+  }
+  
+  void ageandgender(int n,struct customer_details *cusptr)
+{
+   int i, a, a1, count, j, high, k, h;
+    char g;
+
+    
+    int freq[n], sel[n], fin[n], arr[n];
+    
+    printf("Choose the age range\n");
+    printf("1 - less than 12\n");
+    printf("13 - 13 to 19\n");
+    printf("20 - 20 to 29\n");
+    printf("30 - 30 to 39\n");
+    printf("40 - 40 to 59\n");
+    printf("50 - 50 above\n");
+    scanf("%d", &a);
+
+    a1=a;
+  
+    printf("Enter gender\n");
+    printf("Male(M)/Female(F)\n");
+        scanf("%s", &g);
+ 
+    for(i=0;i<=n-1;i++){
+        if(g==cusptr[i].gender[i]){
+            sel[i]=cusptr[i].age;
+        }
+        else{
+            sel[i]=0;
+        }
+    }
+    
+    for(i=0;i<=n-1;i++){
+        if(sel[i]!=0){
+            if(a<=sel[i]){
+                fin[i]=a;
+            }
+            else{
+                fin[i]=0;
+            }
+        }
+        else{
+            fin[i]=0;
+        }
+    }
+    
+    for(i=0;i<=n-1;i++){
+        if(fin[i]!=0){
+            count=1;
+            for(j=i+1;j<=n-1;j++){
+                if(fin[i]==fin[j]){
+                    count=count+1;
+                    freq[j]=0;
+                }
+            }
+            if(freq[i]!=0){
+                freq[i]=count;
+            }
+        }
+    }
+    
+    high=freq[0];
+    
+    for(i=0;i<=n-1;i++){
+        if(freq[i]>=high){
+            high=freq[i];
+            arr[i]=det[i].pcode;
+            k=i;
+        }
+        else{
+            arr[i]=0;
+        }
+    }
+    
+    for(i=0;i<=n-1;i++){
+        count=1;
+        for(j=i+1;j<=n-1;j++){
+            if(arr[i]==arr[j]){
+                count=count+1;
+                freq[j]=0;
+            }
+        }
+        if(freq[i]!=0){
+            freq[i]=count;
+        }
+    }
+    
+    high=freq[0];
+    
+    for(i=0;i<=n-1;i++){
+        if(freq[i]>=high){
+            high=freq[i];
+            h=i;
+        }
+    }
+    
+ 
+    if(a==12){
+        printf("The product with most orders for the age group (less than %d) and gender (%c) is %d\n", a1, g, det[h].pcode);
+    }
+    else if(a!=50){
+        printf("The product with most orders for the age group (%d to %d) and gender (%c) is %d\n", a1, (a1+9), g, det[h].pcode);
+    }
+    else{
+        printf("The product with most orders for the age group (above %d) and gender (%c) is %d\n", a1, g, det[h].pcode);
+    }
+}
+
+void agerange()
+{
+    int a;
+    printf("Specify the item you want to know about\n1.Plain shirt\n2.Shirt with strips\n3.T-Shirt\n4. Jeans\n5. Torn jeans\n6. Cotton jeans\n");
+    scanf("%d",&a);
+    
+   if (a==1){
+       printf("Plain shirts are generally purchased by people of age range of 30-50");
+   }
+   if (a==2){
+       printf("Shirt with strips are generally purchased by people of age range of 16-25");
+   }
+   if (a==3){
+       printf("T-Shirts are generally purchased by all-age people");
+   }
+   if (a==4){
+       printf("Jeans are generally purchased by all age people");
+   }
+   if (a==5){
+       printf("Torn jeans are generally purchased by teenagers");
+   }
+   if (a==6){
+       printf("Cotton jeans are generally purchased by people of age range of 30-50");
+   }
+   if(a<=0||a>=7){
+            printf("invalid input");
+        }
+  
+    
+}
+
+//For displaying currently available products.................
+void showAvailableProducts(struct product_details *prodptr){
+    FILE *fp;
+    int pCode;
+    char pName[5][20];
+    char pAgeRange[5][20];
+    float PCost;
+    int i = 0,j,prodch;
+    fp=fopen("productDetails.txt","r");
+    
+    while(fscanf(fp,"%d%s%s%f",&pCode,pName,pAgeRange,&PCost)!=EOF){
+       // printf("\ncode: %d name:%s ageRange:%s cost:%f\n",pCode,pName,pAgeRange,PCost);
+        prodptr[i].ProductCode = pCode;
+        strcpy(prodptr[i].ProductName,pName);
+        strcpy(prodptr[i].ageRange,pAgeRange);
+        prodptr[i].productCost = PCost;
+        i++;
+    }
+     fclose(fp);
+    
+    printf("Our currently Available products are:\n");
+    printf("\nProduct Code\tProduct Name\tAgeRange\tProduct Cost\n");
+    for(j=0;j<i;j++){
+        printf("\n%d \t\t %s \t\t %s \t\t %f\n",prodptr[j].ProductCode,prodptr[j].ProductName,prodptr[j].ageRange,prodptr[j].productCost);
+    }
+}
